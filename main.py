@@ -130,7 +130,7 @@ def click_cookies(driver, timeout=15):
     return False
 
 def new_driver(proxy: str | None = None):
-    download_dir = "//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp"
+    download_dir = Path("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp")
     download_dir.mkdir(parents=True, exist_ok=True)
 
     chrome_options = Options()
