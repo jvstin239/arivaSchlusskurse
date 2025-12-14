@@ -25,10 +25,8 @@ def get_proxy_for_index(index: int) -> str:
         return proxies[2]
 
 def build_ariva_urls(df: pd.DataFrame) -> list[str]:
-
     # heutiges Datum
     today = datetime.today().strftime("%d.%m.%Y")
-
     # Datum robust parsen (unterstützt 21. Nov 25, 21-Nov-25, etc.)
     min_time_series = pd.to_datetime(
         df["eingelesen_bis"],
@@ -189,7 +187,7 @@ for ariva_url in url_list:
 
 ## ab hier Dateien Verarbeitung
 
-folder = "//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp"
+folder = Path("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp")
 
 
 dfs = []
