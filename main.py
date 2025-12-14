@@ -66,7 +66,7 @@ def build_ariva_urls(df: pd.DataFrame) -> list[str]:
         urls.append(url)
 
     return urls
-def login(driver, username= '20211808_Marco', password= '#2021!qsT+_'):
+def login(driver, username= '20211808_Marco', password= 'Sally_13_2025!'):
     driver.get("https://login.ariva.de/realms/ariva/protocol/openid-connect/auth?client_id=ariva-web&redirect_uri=https%3A%2F%2Fwww.ariva.de%2F%3Fbase64_redirect%3DaHR0cHM6Ly93d3cuYXJpdmEuZGUv&response_type=code&scope=openid+profile+email&state=ebf48737-c647-4f9a-aed4-06307db5f022")
     time.sleep(0.5)
     # 1) Benutzername / E-Mail
