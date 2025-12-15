@@ -181,7 +181,7 @@ for ariva_url in url_list:
         time.sleep(1)
         login(driver)
     driver.get(ariva_url)
-    time.sleep(0.05)
+    time.sleep(0.15)
     i = i + 1
 
 
