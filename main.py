@@ -39,7 +39,7 @@ def build_ariva_urls(df: pd.DataFrame) -> list[str]:
     df["eingelesen_bis"] = (
         pd.to_datetime(
             df["eingelesen_bis"],
-            format="%d.%m.%y",
+            format="%d.%m.%Y",
             errors="raise"
         )
         .dt.strftime("%d.%m.%Y")
@@ -143,7 +143,7 @@ def new_driver(temp_path, proxy: str | None = None):
     download_dir.mkdir(parents=True, exist_ok=True)
 
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
+    #chrome_options.add_argument("--headless=new")
     chrome_options.add_experimental_option(
         "prefs",
         {
