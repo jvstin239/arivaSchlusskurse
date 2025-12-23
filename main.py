@@ -13,39 +13,46 @@ from Reader import Reader
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+
 
 proxies = ["http://45.12.106.119:12323", "http://45.40.121.73:12323", "http://45.40.121.64:12323"]
+#temp_path = Path("/Users/justinwild/Downloads/Ariva_Temp")
+temp_path = Path("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp")
+#save_path = Path("/Users/justinwild/Downloads/")
+save_path = Path("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse")
+
 
 def get_proxy_for_index(index: int) -> str:
     if index < 1700:
-        return proxies[0]
+        return proxies[2]
     elif index < 3400:
         return proxies[1]
     else:
-        return proxies[2]
+        return proxies[0]
+
 
 def build_ariva_urls(df: pd.DataFrame) -> list[str]:
-    # heutiges Datum
+    df = df.copy()
+
+    # Datum normalisieren (das bleibt wie gehabt)
+    df["eingelesen_bis"] = (
+        pd.to_datetime(
+            df["eingelesen_bis"],
+            format="%d.%m.%y",
+            errors="raise"
+        )
+        .dt.strftime("%d.%m.%Y")
+    )
+
     today = datetime.today().strftime("%d.%m.%Y")
-    # Datum robust parsen (unterstützt 21. Nov 25, 21-Nov-25, etc.)
-    min_time_series = pd.to_datetime(
-        df["eingelesen_bis"],
-        format="mixed",
-        dayfirst=True,
-        errors="coerce"
-    ).dt.strftime("%d.%m.%Y")
+    urls: list[str] = []
 
-    urls = []
-
-    for idx, row in df.iterrows():
-        wkn = row["WKN"]
-        secu = row["secu"]
-        boerse_id = row["Boerse_ID"]
-        min_time = min_time_series.iloc[idx]
-
-        # ungültige Datumswerte überspringen
-        if pd.isna(min_time):
-            continue
+    for _, row in df.iterrows():
+        wkn = str(row["WKN"])
+        secu = str(row["secu"])
+        boerse_id = str(row["Boerse_ID"])
+        min_time = str(row["eingelesen_bis"])
 
         url = (
             "https://www.ariva.de/quote/historic/historic.csv?"
@@ -62,8 +69,9 @@ def build_ariva_urls(df: pd.DataFrame) -> list[str]:
         )
 
         urls.append(url)
-
+    print("URLs erzeugt:", len(urls))
     return urls
+
 def login(driver, username= '20211808_Marco', password= 'Sally_13_2025!'):
     driver.get("https://login.ariva.de/realms/ariva/protocol/openid-connect/auth?client_id=ariva-web&redirect_uri=https%3A%2F%2Fwww.ariva.de%2F%3Fbase64_redirect%3DaHR0cHM6Ly93d3cuYXJpdmEuZGUv&response_type=code&scope=openid+profile+email&state=ebf48737-c647-4f9a-aed4-06307db5f022")
     time.sleep(0.5)
@@ -88,7 +96,10 @@ def login(driver, username= '20211808_Marco', password= 'Sally_13_2025!'):
     submit_button.click()
     time.sleep(1)
 
+
+
 def click_cookies(driver, timeout=15):
+    time.sleep(5)
     wait = WebDriverWait(driver, timeout)
 
     selectors = [
@@ -127,11 +138,12 @@ def click_cookies(driver, timeout=15):
 
     return False
 
-def new_driver(proxy: str | None = None):
-    download_dir = Path("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp")
+def new_driver(temp_path, proxy: str | None = None):
+    download_dir = temp_path
     download_dir.mkdir(parents=True, exist_ok=True)
 
     chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_experimental_option(
         "prefs",
         {
@@ -153,11 +165,14 @@ def new_driver(proxy: str | None = None):
 def getdata():
     rd = Reader()
     rd.openExplorer()
-    data = pd.read_csv(filepath_or_buffer=rd.path, sep  = ";", encoding="cp1252")
+    data = pd.read_csv(filepath_or_buffer=rd.path, sep  = ";", encoding="cp1252", dtype=str)
     return data
+
 
 daten = getdata()
 url_list = build_ariva_urls(daten)
+url_df = pd.DataFrame(url_list)
+#url_df.to_csv("/Users/justinwild/Downloads/urls.csv")
 
 
 login_url = "https://login.ariva.de/realms/ariva/login-actions/authenticate?session_code=ZrrpH0xEYdRkBqsyLCtZoih8G7F6QMVlZvLglwbKge8&execution=e9102dd0-5958-429b-a14a-2ace928e2387&client_id=ariva-web&tab_id=7oQ6TS-HIHY&client_data=eyJydSI6Imh0dHBzOi8vd3d3LmFyaXZhLmRlLz9iYXNlNjRfcmVkaXJlY3Q9YUhSMGNITTZMeTkzZDNjdVlYSnBkbUV1WkdVdiIsInJ0IjoiY29kZSIsInN0IjoiZWJmNDg3MzctYzY0Ny00ZjlhLWFlZDQtMDYzMDdkYjVmMDIyIn0"
@@ -172,26 +187,27 @@ for ariva_url in url_list:
         if driver:
             driver.quit()
             time.sleep(2)
-        driver = new_driver(proxy)
+        driver = new_driver(temp_path, proxy)
         current_proxy=proxy
         wait = WebDriverWait(driver, 10)
         driver.get(url)
         # Nutzung:
-        ok = click_cookies(driver, timeout=20)
-        time.sleep(1)
+        click_cookies(driver)
         login(driver)
     driver.get(ariva_url)
-    time.sleep(0.15)
+    time.sleep(0.018)
     i = i + 1
+    if(i % 500 == 0):
+        time.sleep(10)
 
 
 ## ab hier Dateien Verarbeitung
 
-folder = Path("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse/temp")
-
+folder = temp_path
 
 dfs = []
 csv_files = list(folder.glob("*.csv"))
+print(str(len(csv_files)) + " Dateien im Ordner")
 time.sleep(3)
 for file in csv_files:
     wkn = file.name.split("_")[1]
@@ -206,3 +222,4 @@ for file in csv_files:
 
 df_all = pd.concat(dfs, ignore_index=True)
 df_all.to_csv("//Master/F/User/Microsoft Excel/Privat/Börse/historische_Kurse" + "/historic_all_" + datetime.now().strftime("%Y-%m-%d%H%M") + ".csv", sep=";", encoding="utf-8", index=False)
+#df_all.to_csv("/Users/justinwild/Downloads/historic_all" + datetime.now().strftime("%Y-%m-%d%H%M") + ".csv", sep=";", encoding="utf-8", index=False)
