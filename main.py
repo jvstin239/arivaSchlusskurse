@@ -206,7 +206,7 @@ for ariva_url in url_list:
 folder = temp_path
 
 time.sleep(120)
-
+#
 dfs = []
 csv_files = list(folder.glob("*.csv"))
 print(str(len(csv_files)) + " Dateien im Ordner")
