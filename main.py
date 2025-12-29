@@ -186,7 +186,7 @@ for ariva_url in url_list:
     if proxy != current_proxy:
         if driver:
             driver.quit()
-            time.sleep(2)
+            time.sleep(60)
         driver = new_driver(temp_path, proxy)
         current_proxy=proxy
         wait = WebDriverWait(driver, 10)
@@ -197,13 +197,15 @@ for ariva_url in url_list:
     driver.get(ariva_url)
     time.sleep(0.018)
     i = i + 1
-    if(i % 500 == 0):
+    if(i % 250 == 0):
         time.sleep(10)
 
 
 ## ab hier Dateien Verarbeitung
 
 folder = temp_path
+
+time.sleep(120)
 
 dfs = []
 csv_files = list(folder.glob("*.csv"))
